@@ -1,7 +1,7 @@
 # Thermic-Control-Solvers
 
 :rocket:  **BRIEF DESCRIPTION** :rocket:  
-High efficiency solvers developed to deal with thermic control problems from satellites. Below are explained all the files needed for running correctly the solvers. The user should only modify the txt files which define the thermic problem for each specific case: GLs, GRxBB and Nodes. In this example the solvers are solving the model of a flat plate with boundary conditions. The data should be provided in txt files with the exact same format as the given txt files (ESATAN format). User should also provide the total number of nodes where it´s indicated in the main file.                                             
+High efficiency solvers developed to deal with thermic control problems from satellites. Below are explained all the files needed for running correctly the solvers. The user should only modify the txt files which define the thermic problem for each specific case: GLs, GRxBB and Nodes. In this example the solvers are solving the model of a flat plate with boundary conditions. The data should be provided in txt files with the exact same format as the given txt files (ESATAN format). User should also provide the total number of nodes where it´s indicated in the ObjectsDefinition file.                                             
                                                                                                                                                                  
                                                                  C++ 2017     
                                                  
