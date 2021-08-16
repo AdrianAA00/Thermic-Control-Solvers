@@ -11,6 +11,7 @@ int ObjectsDefinition(int& size, int& boundaryNodes, SparseMatrix<double>& kl_S,
     //New model
     Thermal_Model model;
 
+    //******************************************* INDICATE HERE THE TOTAL NUMBER OF NODES OF THE MODEL *****************************************
     model.n = 1574;
 
     //Folder with the files: 'GLs.dat', 'GRs.dat' and 'Nodes.dat'
