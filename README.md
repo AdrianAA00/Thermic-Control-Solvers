@@ -23,9 +23,9 @@ High efficiency solvers developed to deal with thermic control problems from sat
       3.2.) StableStationarySolver -> Static solver: slower but more robust. Uses direct LU factorization in each iteration                                        
       3.3.) StableStationarySolverInternal -> Static solver used for the implicit temporal schemes                                                                                                                                                                      
       3.3.) Temporalsolver -> Dynamic solver. Adjustable time step and range of time. Three solvers:                                                             
-       - 3.3.1.) Euler                                                                                                                                      
-       - 3.3.2.) AB2 -> Adams Bashforth 2                                                                                                                   
-       - 3.3.3.) RK4 -> Runge Kutta 4                                                                                                                       
+         - 3.3.1.) Euler                                                                                                                                      
+         - 3.3.2.) AB2 -> Adams Bashforth 2                                                                                                                   
+         - 3.3.3.) RK4 -> Runge Kutta 4                                                                                                                       
                                                                                                                                                                    
  **4) Thermal Model:**                                                                                                                                               
       4.1.) ThermalModel -> Reads Gls, Grs, T0, QL and C and creates the matrices for solving the problem                                                        
