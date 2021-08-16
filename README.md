@@ -1,14 +1,14 @@
 # Thermic-Control-Solvers
 
 :rocket:  BRIEF DESCRIPTION :rocket:  
-High efficiency solvers developed to deal with thermic control problems from satellites. Below are explained all the files needed for running correctly the solvers. The user should only modify the txt files which define the thermic problem for each specific case: GLs, GRxBB and Nodes. In this example the solvers are solving the model of a flat plate with boundary conditions. The data should be provided in txt files with the exact same format as the given txt files. User should also provide the total number of nodes where it´s indicated in the main file.                                             
+High efficiency solvers developed to deal with thermic control problems from satellites. Below are explained all the files needed for running correctly the solvers. The user should only modify the txt files which define the thermic problem for each specific case: GLs, GRxBB and Nodes. In this example the solvers are solving the model of a flat plate with boundary conditions. The data should be provided in txt files with the exact same format as the given txt files (ESATAN format). User should also provide the total number of nodes where it´s indicated in the main file.                                             
                                                                                                                                                                  
                                                                   C++ 2017     
                                                  
                                                      Author: Adrián Antón Álvarez & IDR                      
                                                                                                                                                                  
 
-//************************************************************* DESCRIPTION ****************************************************************//
+//************************************************************** DESCRIPTION ****************************************************************//
 
  1) Eigen library needed -> 3.4_rc1 version or more recent                                                                                     
   2) Definition and inicialization of objects needed during the program                                                                                          
@@ -31,7 +31,13 @@ High efficiency solvers developed to deal with thermic control problems from sat
                                                                                                                                                                  
  5) Header Files:                                                                                                                                                
       5.1.) Solvers                                                                                                                                              
-      5.2.) ThermalModel                                                                                                                                         
+      5.2.) ThermalModel       
+
+ 6) Model Files (ESATAN format) for the example:
+      6.1.)  GLs: conductive terms between nodes.
+      6.2.)  GRxBB: radiative terms between nodes.
+      6.3.)  Nodes: nodeType // calorific capacity // external thermic loads // initial temperature
+                                                                                                                                     
                                                                                                                                                                  
 //**********************************************************************************************************************************************//
 
