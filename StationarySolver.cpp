@@ -1,117 +1,92 @@
-// C++ 2017
-// Author: Adrián Antón Álvarez & IDR
+#include "Solvers.h"
 
-//**********************************************Description********************************************************
-// Fix point method for solving non linear systems of equation. Used for thermic control problems.
-// This code has problems of stability for certain values of the matrices.
-// Sample matrices are used to demonstrate how it works.
-// Eigen library needed.
-//*****************************************************************************************************************
-
-#include <iostream>
-#include <Eigen/Dense>
-#include <chrono>
-
-using namespace std::chrono;
-using namespace Eigen;
-
-int main()
+int StationarySolver(VectorXd& T, double error_T, int maxIter_T, double error_fix_point, int maxIter_fix_point)
 {
-    int size = 4;                    //Number on nodes
+    int size;                         //Number on nodes
+    int boundaryNodes;                //Number of nodes with boundary condition
 
-    //error_fix_point should be smaller than error_T
-    double error_fix_point = 10E-8;                    //Error during solving with fix point method (incre_T)
-    int maxIter_fix_point = 10E1;                       //Max iterations fix point method (incre_T)
+    SparseMatrix<double> kl_S;        //Vectors and matrices incluiding boundary conditions
+    SparseMatrix<double> kr_S;
+    VectorXd T0;
+    VectorXd QL;
+    VectorXd c;
+    double time = 0;
 
-    double error_T = 10E-5;                             //Error during solving T
-    int maxIter_T = 10E1;                               //Max iterations T
-
-    MatrixXd kl(size, size);
-    MatrixXd kr(size, size);
-    VectorXd T(size);
-    VectorXd QL(size);
-
-
-    //**************************************************************************************************************
-    // Sample matrices
-    kl << -0.0025, 0, 0.0025, 0,     //Conductive terms
-        0., -0.09, 0, 0.09,
-        0.0025, 0, -0.0165, 0.01,
-        0, 0.09, 0.01, -0.1;
-
-    kr << -0.0055, 0, 0.0055, 0,     //Radiative terms
-        0, -0.004, 0.004, 0,
-        0.0055, 0.004, -0.0365, 0.027,
-        0, 0, 0.027, -0.027;
-
-    kr = kr * 10E-8;
-
-    T << 10, 10, 10, 10;    // 10 Kelvin as start point
-    VectorXd T0(size);
-
-    QL << 50, 100, 75, 75;  // External thermal loads
-    QL = QL * 10E-5;
-
-    std::cout << "kl" << "\n" << kl << "\n";
-    std::cout << "\n" << "kr" << "\n" << kr << "\n";
-
-
-    // Get starting timepoint
-    auto start = high_resolution_clock::now();
-
-    //****************************************************************************************************************
-    // LU Factorizing kl 
-    VectorXd b(size);        //Independent term in the fix point iterating method
-    MatrixXd kl_LU = kl;     //Save kl for future operations
-    PartialPivLU<Ref<MatrixXd> > lu(kl_LU);
-    //std::cout << "\n Matrix A after decomposition:\n" << kl_LU << "\n";
-
-
-    //****************************************************************************************************************
-    //Iterating for solving KL*incre_T = F*incre_T: fix point iteration method
-    MatrixXd T_diago(size, size);
-    MatrixXd T_diago_3(size, size);
-    VectorXd T_4 = T.array().pow(4);
-    VectorXd incre_T(size);
-    VectorXd incre_T0(size);
+    //**********************************************************************************************************************************************************
+    //                             LU Factorizing kl and direct solving (no fix point method)  Faster vs Non-Stable
+    //**********************************************************************************************************************************************************
+    MatrixXd T_diago;
+    MatrixXd T_diago_3;
+    SparseMatrix<double> T_diago_3_S;
+    VectorXd incre_T;
+    VectorXd incre_T0;
+    VectorXd T_4;
 
     int count_fix_point;
     int count_T = 0;
 
     do
     {
+        if (count_T == 0)
+        { 
+            ObjectsDefinition(size, boundaryNodes, kl_S, kr_S, T0, QL, c, T, time);
+            T_diago_3_S = kl_S.selfadjointView<Upper>();
+            kl_S = T_diago_3_S;
+
+            T_diago_3_S = kr_S.selfadjointView<Upper>();
+            kr_S = T_diago_3_S;
+        }
+        
+
+        T0.setConstant(0);;                    //Do not start at 0 Kelvin 
+
+        if (count_T == 0)
+        {
+            T = T0;                             //Initial iteration point
+        }
+
+        // LU Factorizing
+        VectorXd b;                                                  //Independent term in the fix point iterating method
+
+        //Eigen solver
+        //BiCGSTAB <SparseMatrix<double>> solver;
+        //SparseLU
+        //SimplicialLDLT  -> Much faster
+        //BiCGSTAB
+        //ConjugateGradient 
+
+        //MKL solver
+        Eigen::PardisoLU< SparseMatrix<double>> solver;
+        //PardisoLU
+        //PardisoLDLT 
+        //PardisoLLT
+
+        solver.compute(kl_S);
+    
         T_diago = T.asDiagonal();
         T_diago_3 = T_diago.array().pow(3);
-        T_4 = T.array().pow(4);
-        incre_T << 0, 0, 0, 0;                  // Start point of unknown variable we are calculating
-        count_fix_point = 0;                    // Record number of iterations  
+        T_diago_3_S = T_diago_3.sparseView();
+        T_diago_3.resize(0, 0);
 
+        T_4 = T.array().pow(4);
+        incre_T = VectorXd::Zero(size);                  // Start point of unknown variable we are calculating
+        count_fix_point = 0;                             // Record number of iterations  
 
         do
         {
-            b = -(kl * T + QL + kr * T_4 + 4 * kr * T_diago_3 * incre_T);
-            incre_T0 = incre_T;                                                                 //Save previous iteration value for stopping criterion
-            incre_T = lu.solve(b);                                                              //Solving system. kl was previously LU factorized
+            b = -(kl_S * T + QL + kr_S * T_4 + 4 * kr_S * (T_diago_3_S * incre_T));
+            incre_T0 = incre_T;                                                                                 //Save previous iteration value for stopping criterion
+            incre_T = solver.solve(b);                                                                          //Solving system. kl was previously LU factorized
             count_fix_point++;
         } while ((incre_T - incre_T0).norm() > error_fix_point && count_fix_point < maxIter_fix_point);         //Stop criterion for fix point iteration method
 
-        std::cout << "\n incre_T = \n" << incre_T << ", number of iterations incre_T = " << count_fix_point << "\n";
-
+        std::cout << "\n incre_T = \n" << ", number of iterations incre_T = " << count_fix_point << "\n";
         count_T++;
         T0 = T;                                                                                  //Save previous iteration value for stopping criterion
         T = T + incre_T;
-        std::cout << "\n T = \n" << T << ", number of iterations T = " << count_T << "\n";
+        std::cout << "\n Error = \n" << incre_T.norm() << ", number of iterations T = " << count_T << "\n";
 
     } while ((T - T0).norm() > error_T && count_T < maxIter_T);                                  //Stop criterion for temperature
-
-    std::cout << "\n T:\n" << T;
-
-    // Get ending timepoint
-    auto stop = high_resolution_clock::now();
-
-    // Get duration of execution.
-    auto duration = duration_cast<microseconds>(stop - start);
-    std::cout << "\n Time taken by function: \n " << duration.count() << " microseconds";
 
     return 0;
 }
